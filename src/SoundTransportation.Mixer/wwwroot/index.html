@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sound Transportation</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main>
+    <header class="topbar">
+      <div>
+        <h1>Sound Transportation</h1>
+        <p id="status">Loading...</p>
+      </div>
+      <div class="actions">
+        <button id="refresh" type="button">Refresh</button>
+        <button id="save-config" type="button">Save Config</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Views">
+      <button class="tab active" type="button" data-view="mixer-view">Mixer</button>
+      <button class="tab" type="button" data-view="config-view">Config</button>
+    </nav>
+
+    <section id="mixer-view" class="view active">
+      <section id="channels" class="channels" aria-label="Channels"></section>
+    </section>
+
+    <section id="config-view" class="view">
+      <form id="config-form" class="config-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Receiver</h2>
+            <label class="toggle"><input id="receiver-enabled" type="checkbox"> Enabled</label>
+          </div>
+          <label class="toggle line"><input id="receiver-auto" type="checkbox"> Auto create channels</label>
+          <div class="subhead">
+            <h3>IP Channels</h3>
+            <button id="add-receiver-channel" type="button">Add Channel</button>
+          </div>
+          <div id="receiver-channels" class="rows"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Transmitter</h2>
+            <label class="toggle"><input id="transmitter-enabled" type="checkbox"> Enabled</label>
+          </div>
+          <label class="field">
+            <span>Name</span>
+            <input id="transmitter-name" type="text" placeholder="Computer A">
+          </label>
+          <label class="field">
+            <span>Sender ID</span>
+            <input id="transmitter-id" type="text" placeholder="optional GUID">
+          </label>
+          <div class="subhead">
+            <h3>Targets</h3>
+            <button id="add-target" type="button">Add Target</button>
+          </div>
+          <div id="targets" class="rows"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Audio</h2>
+          </div>
+          <label class="field">
+            <span>UDP Port</span>
+            <input id="udp-port" type="number" min="1" max="65535">
+          </label>
+          <label class="toggle line"><input id="audio-output-enabled" type="checkbox"> Output enabled</label>
+          <label class="toggle line"><input id="local-session-mute-enabled" type="checkbox"> Mute local apps during remote Solo</label>
+          <label class="toggle line"><input id="local-loopback-enabled" type="checkbox"> Local channel enabled</label>
+          <label class="field">
+            <span>Local name</span>
+            <input id="local-loopback-name" type="text" placeholder="E Local">
+          </label>
+          <label class="toggle line"><input id="local-loopback-output" type="checkbox"> Local channel output</label>
+        </section>
+      </form>
+      <p id="config-message" class="message"></p>
+    </section>
+  </main>
+
+  <template id="channel-template">
+    <article class="channel">
+      <div class="channel-head">
+        <div>
+          <h2></h2>
+          <p class="meta"></p>
+        </div>
+        <div class="state"></div>
+      </div>
+      <div class="meter"><span></span></div>
+      <label class="volume">
+        <span>Volume</span>
+        <input type="range" min="0" max="2" step="0.01">
+        <input class="volume-percent" type="number" min="0" max="200" step="1">
+      </label>
+      <label class="source-ip">
+        <span>Source IP</span>
+        <input type="text" inputmode="numeric" placeholder="auto">
+        <button class="bind" type="button">Bind</button>
+      </label>
+      <div class="buttons">
+        <button class="mute" type="button">Mute</button>
+        <button class="solo" type="button">Solo</button>
+        <button class="output" type="button">Output</button>
+      </div>
+    </article>
+  </template>
+
+  <template id="receiver-channel-template">
+    <div class="config-row receiver-row">
+      <input class="receiver-name" type="text" placeholder="Channel name">
+      <input class="receiver-ip" type="text" inputmode="numeric" placeholder="Source IP">
+      <label class="small-toggle"><input class="receiver-output" type="checkbox"> Output</label>
+      <button class="remove-row" type="button">Remove</button>
+    </div>
+  </template>
+
+  <template id="target-template">
+    <div class="config-row target-row">
+      <input class="target-address" type="text" inputmode="numeric" placeholder="Receiver IP">
+      <input class="target-port" type="number" min="1" max="65535" placeholder="5055">
+      <button class="remove-row" type="button">Remove</button>
+    </div>
+  </template>
+
+  <script src="/app.js"></script>
+</body>
+</html>
