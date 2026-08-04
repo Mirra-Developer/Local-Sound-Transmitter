@@ -10,6 +10,29 @@ One executable can run as:
 
 The receiver can bind each mixer channel to a specific transmitter IP address.
 
+## One-click Setup on Another PC
+
+Copy `install-and-run.bat` to another Windows PC and double-click it.
+
+The script will:
+
+- Check Git
+- Check .NET SDK
+- Clone or update this repository into `%USERPROFILE%\Local-Sound-Transmitter`
+- Build the project
+- Start the Web UI at `http://127.0.0.1:5080`
+
+Requirements:
+
+- Git: https://git-scm.com/downloads
+- .NET 8 SDK: https://dotnet.microsoft.com/download
+
+If the source code is already downloaded, you can run:
+
+```bat
+scripts\run-mixer.bat
+```
+
 ## UI Configuration
 
 Start the app and open the Web UI:
