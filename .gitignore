@@ -2,6 +2,7 @@
 bin/
 obj/
 publish/
+release/
 
 # User/local IDE files
 .vs/
@@ -17,6 +18,9 @@ logs/
 *.dmp
 *.trace
 
+# Deployment inventory with real store addresses
+deploy/stores.csv
+
 # OS files
 Thumbs.db
 Desktop.ini
@@ -31,4 +35,3 @@ TestResults/
 coverage/
 *.coverage
 *.coveragexml
-

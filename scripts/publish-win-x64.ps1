@@ -12,3 +12,5 @@ dotnet publish src\SoundTransportation.Mixer `
     --self-contained true `
     -p:PublishSingleFile=true `
     -o $Output
+
+Write-Host "Published to $Output"

@@ -78,7 +78,7 @@ Allow these inbound ports in Windows Firewall on receiver machines.
 Build a self-contained win-x64 package:
 
 ```powershell
-dotnet publish src\SoundTransportation.Mixer -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish\SoundTransportation
+.\scripts\publish-win-x64.ps1
 ```
 
 Deploy this folder to each PC:
@@ -94,6 +94,70 @@ SoundTransportation.Mixer.exe
 appsettings.json
 wwwroot\
 ```
+
+## Multi-store Deployment
+
+Recommended flow:
+
+1. Build one release package at HQ.
+2. Test it on one PC.
+3. Deploy the same package to store PCs.
+4. Store-specific `appsettings.json` is preserved during updates by default.
+
+Build a versioned zip package:
+
+```powershell
+.\scripts\build-package.ps1 -Version 2026.08.25.1
+```
+
+This creates:
+
+```text
+release\SoundTransportation-2026.08.25.1.zip
+```
+
+Install or update one local PC from a zip:
+
+```powershell
+.\scripts\install-update-local.ps1 -PackageZip .\release\SoundTransportation-2026.08.25.1.zip
+```
+
+Default install directory:
+
+```text
+C:\SoundTransportation
+```
+
+The updater stops the installed app, replaces program files, preserves existing `appsettings.json`, and restarts the app.
+
+For multiple stores, copy the template:
+
+```powershell
+copy deploy\stores.example.csv deploy\stores.csv
+```
+
+Edit `deploy\stores.csv`:
+
+```csv
+Name,ComputerName,InstallDir,Enabled
+Store-001,STORE001-PC,C:\SoundTransportation,true
+Store-002,192.168.1.52,C:\SoundTransportation,true
+```
+
+Deploy to all enabled stores:
+
+```powershell
+.\scripts\deploy-stores.ps1 -PackageZip .\release\SoundTransportation-2026.08.25.1.zip -StoresCsv .\deploy\stores.csv
+```
+
+Remote deployment requirements:
+
+- The HQ/admin computer can reach each store computer by VPN/LAN.
+- PowerShell Remoting / WinRM is enabled on each store computer.
+- The Windows account running deployment has admin permissions on store computers.
+- Firewalls allow WinRM traffic.
+
+If remote PowerShell is not available, send the zip plus `scripts\install-update-local.ps1` to the store and run the local install command there.
 
 ## Receiver Example
 
