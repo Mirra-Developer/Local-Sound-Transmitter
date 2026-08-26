@@ -8,6 +8,52 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function New-Shortcut {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ShortcutPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$TargetPath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$WorkingDirectory
+    )
+
+    $shell = New-Object -ComObject WScript.Shell
+    $shortcut = $shell.CreateShortcut($ShortcutPath)
+    $shortcut.TargetPath = $TargetPath
+    $shortcut.WorkingDirectory = $WorkingDirectory
+    $shortcut.IconLocation = $TargetPath
+    $shortcut.Save()
+}
+
+function Set-StartupShortcut {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$InstallDir
+    )
+
+    $exePath = Join-Path $InstallDir "SoundTransportation.Mixer.exe"
+    if (!(Test-Path -LiteralPath $exePath)) {
+        throw "Installed exe not found: $exePath"
+    }
+
+    $startupDir = Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs\Startup"
+    try {
+        New-Item -ItemType Directory -Force $startupDir | Out-Null
+        $shortcutPath = Join-Path $startupDir "Sound Transportation.lnk"
+        New-Shortcut -ShortcutPath $shortcutPath -TargetPath $exePath -WorkingDirectory $InstallDir
+        Write-Host "Startup shortcut created: $shortcutPath"
+    } catch {
+        $userStartupDir = [Environment]::GetFolderPath("Startup")
+        New-Item -ItemType Directory -Force $userStartupDir | Out-Null
+        $shortcutPath = Join-Path $userStartupDir "Sound Transportation.lnk"
+        New-Shortcut -ShortcutPath $shortcutPath -TargetPath $exePath -WorkingDirectory $InstallDir
+        Write-Host "User startup shortcut created: $shortcutPath"
+    }
+}
+
 $sourceDirFull = [System.IO.Path]::GetFullPath($SourceDir)
 $installDirFull = [System.IO.Path]::GetFullPath($InstallDir)
 
@@ -60,43 +106,3 @@ if (!$NoStart) {
 
 Remove-Item -LiteralPath $backupConfig -Force -ErrorAction SilentlyContinue
 Write-Host "Install/update complete."
-
-function Set-StartupShortcut {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$InstallDir
-    )
-
-    $exePath = Join-Path $InstallDir "SoundTransportation.Mixer.exe"
-    $startupDir = Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs\Startup"
-    try {
-        New-Item -ItemType Directory -Force $startupDir | Out-Null
-        $shortcutPath = Join-Path $startupDir "Sound Transportation.lnk"
-        New-Shortcut -ShortcutPath $shortcutPath -TargetPath $exePath -WorkingDirectory $InstallDir
-        Write-Host "Startup shortcut created: $shortcutPath"
-    } catch {
-        $userStartupDir = [Environment]::GetFolderPath("Startup")
-        New-Item -ItemType Directory -Force $userStartupDir | Out-Null
-        $shortcutPath = Join-Path $userStartupDir "Sound Transportation.lnk"
-        New-Shortcut -ShortcutPath $shortcutPath -TargetPath $exePath -WorkingDirectory $InstallDir
-        Write-Host "User startup shortcut created: $shortcutPath"
-    }
-}
-
-function New-Shortcut {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$ShortcutPath,
-        [Parameter(Mandatory = $true)]
-        [string]$TargetPath,
-        [Parameter(Mandatory = $true)]
-        [string]$WorkingDirectory
-    )
-
-    $shell = New-Object -ComObject WScript.Shell
-    $shortcut = $shell.CreateShortcut($ShortcutPath)
-    $shortcut.TargetPath = $TargetPath
-    $shortcut.WorkingDirectory = $WorkingDirectory
-    $shortcut.IconLocation = $TargetPath
-    $shortcut.Save()
-}
