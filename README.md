@@ -225,7 +225,7 @@ E PC receives A/B/C/D and outputs to speakers:
 {
   "Receiver": {
     "Enabled": true,
-    "AutoCreateChannels": true,
+    "AutoCreateChannels": false,
     "Channels": [
       {
         "Name": "Computer A",

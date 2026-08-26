@@ -21,7 +21,7 @@ public sealed class AppSettingsStore
     {
         var root = ReadRoot();
         return new AppConfigDto(
-            ReadSection(root, "Receiver", new ReceiverConfigDto(true, true, [])),
+            ReadSection(root, "Receiver", new ReceiverConfigDto(true, false, [])),
             ReadSection(root, "Transmitter", new TransmitterConfigDto(false, string.Empty, string.Empty, [])),
             ReadSection(root, "Audio", new AudioConfigDto(
                 5055,

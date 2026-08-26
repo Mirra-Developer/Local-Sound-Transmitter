@@ -152,11 +152,11 @@ app.MapGet("/api/config", (AppSettingsStore settingsStore) => settingsStore.Read
 app.MapPut("/api/config", (AppConfigDto config, AppSettingsStore settingsStore, ChannelRegistry registry) =>
 {
     settingsStore.Save(config);
-    registry.ApplyConfiguredChannels(config.Receiver.Channels);
+    registry.ApplyReceiverConfig(config.Receiver);
     return new ConfigSaveResult(
         true,
         true,
-        "Configuration saved. Receiver channel bindings were applied now; restart the app for transmitter, port, output, and service enable changes.",
+        "Configuration saved. Receiver channel bindings were applied now; turn off auto create channels to hide unconfigured remote sources. Restart the app for transmitter, port, output, and service enable changes.",
         settingsStore.Read());
 });
 

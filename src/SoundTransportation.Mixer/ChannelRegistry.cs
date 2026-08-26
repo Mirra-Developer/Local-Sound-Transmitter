@@ -9,11 +9,11 @@ public sealed class ChannelRegistry
 {
     private readonly ConcurrentDictionary<Guid, AudioChannel> _channels = new();
     private readonly ConcurrentDictionary<string, Guid> _channelsBySourceIp = new(StringComparer.OrdinalIgnoreCase);
-    private readonly bool _autoCreateChannels;
+    private volatile bool _autoCreateChannels;
 
     public ChannelRegistry(IConfiguration configuration)
     {
-        _autoCreateChannels = configuration.GetValue("Receiver:AutoCreateChannels", true);
+        _autoCreateChannels = configuration.GetValue("Receiver:AutoCreateChannels", false);
         foreach (var section in configuration.GetSection("Receiver:Channels").GetChildren())
         {
             var sourceIp = NormalizeIp(section.GetValue<string>("SourceIp"));
@@ -103,9 +103,12 @@ public sealed class ChannelRegistry
         SetSourceIp(channel, NormalizeIp(sourceIp));
     }
 
-    public void ApplyConfiguredChannels(IEnumerable<ReceiverChannelConfigDto> channels)
+    public void ApplyReceiverConfig(ReceiverConfigDto receiver)
     {
-        foreach (var config in channels)
+        _autoCreateChannels = receiver.AutoCreateChannels;
+        var configuredIds = new HashSet<Guid>();
+
+        foreach (var config in receiver.Channels)
         {
             if (string.IsNullOrWhiteSpace(config.Name) && string.IsNullOrWhiteSpace(config.SourceIp))
             {
@@ -116,6 +119,12 @@ public sealed class ChannelRegistry
                 string.IsNullOrWhiteSpace(config.Name) ? config.SourceIp ?? "Configured Channel" : config.Name,
                 config.SourceIp);
             channel.OutputEnabled = config.OutputEnabled;
+            configuredIds.Add(channel.Id);
+        }
+
+        if (!receiver.AutoCreateChannels)
+        {
+            RemoveUnconfiguredRemoteChannels(configuredIds);
         }
     }
 
@@ -152,6 +161,22 @@ public sealed class ChannelRegistry
         if (sourceIp is not null)
         {
             _channelsBySourceIp[sourceIp] = channel.Id;
+        }
+    }
+
+    private void RemoveUnconfiguredRemoteChannels(HashSet<Guid> configuredIds)
+    {
+        foreach (var channel in _channels.Values)
+        {
+            if (channel.IsLocalLoopback || configuredIds.Contains(channel.Id))
+            {
+                continue;
+            }
+
+            if (_channels.TryRemove(channel.Id, out var removed) && removed.SourceIp is not null)
+            {
+                _channelsBySourceIp.TryRemove(removed.SourceIp, out _);
+            }
         }
     }
 
