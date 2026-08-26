@@ -12,6 +12,8 @@ public sealed class AudioChannel
     private int _currentOffset;
     private int _queuedSamples;
     private float _level;
+    private float _volume = 1f;
+    private float _effectiveVolume = 1f;
 
     public AudioChannel(Guid id, string name)
     {
@@ -25,7 +27,22 @@ public sealed class AudioChannel
     public string? SourceIp { get; set; }
     public string? LastSourceIp { get; set; }
     public bool IsLocalLoopback { get; set; }
-    public float Volume { get; set; } = 1f;
+    public float Volume
+    {
+        get => Volatile.Read(ref _volume);
+        set
+        {
+            var clamped = Math.Clamp(value, 0f, 2f);
+            Volatile.Write(ref _volume, clamped);
+            Volatile.Write(ref _effectiveVolume, clamped);
+        }
+    }
+
+    public float EffectiveVolume
+    {
+        get => Volatile.Read(ref _effectiveVolume);
+        set => Volatile.Write(ref _effectiveVolume, Math.Clamp(value, 0f, 2f));
+    }
     public bool Muted { get; set; }
     public bool Solo { get; set; }
     public bool OutputEnabled { get; set; } = true;

@@ -38,6 +38,30 @@ public sealed class ChannelRegistry
 
     public AudioChannel? GetChannel(Guid id) => _channels.TryGetValue(id, out var channel) ? channel : null;
 
+    public AudioChannel? FindChannel(Guid? id, string? name, string? sourceIp)
+    {
+        if (id is not null && _channels.TryGetValue(id.Value, out var channelById))
+        {
+            return channelById;
+        }
+
+        var normalizedIp = NormalizeIp(sourceIp);
+        if (normalizedIp is not null &&
+            _channelsBySourceIp.TryGetValue(normalizedIp, out var channelId) &&
+            _channels.TryGetValue(channelId, out var channelByIp))
+        {
+            return channelByIp;
+        }
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            return _channels.Values.FirstOrDefault(channel =>
+                channel.Name.Equals(name.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+
+        return null;
+    }
+
     public AudioChannel? UpsertHello(Guid id, string name, string? sourceIp = null, bool forceCreate = false)
     {
         var channel = ResolveChannel(id, sourceIp, name) ?? (forceCreate ? _channels.GetOrAdd(id, _ => new AudioChannel(id, name)) : null);

@@ -1,28 +1,25 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$PackageZip,
-
+    [string]$SourceDir = $PSScriptRoot,
     [string]$InstallDir = "C:\SoundTransportation",
-
     [switch]$NoStart,
-
     [switch]$NoStartup,
-
     [switch]$OverwriteConfig
 )
 
 $ErrorActionPreference = "Stop"
 
-if (!(Test-Path -LiteralPath $PackageZip)) {
-    throw "Package not found: $PackageZip"
+$sourceDirFull = [System.IO.Path]::GetFullPath($SourceDir)
+$installDirFull = [System.IO.Path]::GetFullPath($InstallDir)
+
+if (!(Test-Path -LiteralPath (Join-Path $sourceDirFull "SoundTransportation.Mixer.exe"))) {
+    throw "Source folder does not contain SoundTransportation.Mixer.exe: $sourceDirFull"
 }
 
-$installDirFull = [System.IO.Path]::GetFullPath($InstallDir)
 $backupConfig = Join-Path $env:TEMP "SoundTransportation-appsettings-backup.json"
 $existingConfig = Join-Path $installDirFull "appsettings.json"
 $hasExistingConfig = Test-Path -LiteralPath $existingConfig
 
-Write-Host "Installing Sound Transportation to $installDirFull"
+Write-Host "Installing Sound Transportation from $sourceDirFull to $installDirFull"
 
 Get-Process SoundTransportation.Mixer -ErrorAction SilentlyContinue | ForEach-Object {
     try {
@@ -39,45 +36,30 @@ if ($hasExistingConfig -and !$OverwriteConfig) {
     Copy-Item -LiteralPath $existingConfig -Destination $backupConfig -Force
 }
 
-$tempRoot = Join-Path $env:TEMP ("SoundTransportation-update-" + [Guid]::NewGuid().ToString("N"))
-New-Item -ItemType Directory -Force $tempRoot | Out-Null
+New-Item -ItemType Directory -Force $installDirFull | Out-Null
+Get-ChildItem -LiteralPath $installDirFull -Force | Where-Object {
+    $_.Name -notin @("appsettings.json", "logs")
+} | Remove-Item -Recurse -Force
 
-try {
-    Expand-Archive -LiteralPath $PackageZip -DestinationPath $tempRoot -Force
-    $exe = Get-ChildItem -LiteralPath $tempRoot -Recurse -Filter "SoundTransportation.Mixer.exe" | Select-Object -First 1
-    if ($null -eq $exe) {
-        throw "Package does not contain SoundTransportation.Mixer.exe"
-    }
+Copy-Item -Path (Join-Path $sourceDirFull "*") -Destination $installDirFull -Recurse -Force
 
-    $packageDir = $exe.Directory.FullName
-    New-Item -ItemType Directory -Force $installDirFull | Out-Null
-
-    Get-ChildItem -LiteralPath $installDirFull -Force | Where-Object {
-        $_.Name -notin @("appsettings.json", "logs")
-    } | Remove-Item -Recurse -Force
-
-    Copy-Item -Path (Join-Path $packageDir "*") -Destination $installDirFull -Recurse -Force
-
-    if ($hasExistingConfig -and !$OverwriteConfig -and (Test-Path -LiteralPath $backupConfig)) {
-        Copy-Item -LiteralPath $backupConfig -Destination $existingConfig -Force
-        Write-Host "Existing appsettings.json preserved."
-    }
-
-    if (!$NoStart) {
-        $installedExe = Join-Path $installDirFull "SoundTransportation.Mixer.exe"
-        Start-Process -FilePath $installedExe -WorkingDirectory $installDirFull
-        Write-Host "Started Sound Transportation."
-    }
-
-    if (!$NoStartup) {
-        Set-StartupShortcut -InstallDir $installDirFull
-    }
-
-    Write-Host "Install/update complete."
-} finally {
-    Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue
-    Remove-Item -LiteralPath $backupConfig -Force -ErrorAction SilentlyContinue
+if ($hasExistingConfig -and !$OverwriteConfig -and (Test-Path -LiteralPath $backupConfig)) {
+    Copy-Item -LiteralPath $backupConfig -Destination $existingConfig -Force
+    Write-Host "Existing appsettings.json preserved."
 }
+
+if (!$NoStartup) {
+    Set-StartupShortcut -InstallDir $installDirFull
+}
+
+if (!$NoStart) {
+    $installedExe = Join-Path $installDirFull "SoundTransportation.Mixer.exe"
+    Start-Process -FilePath $installedExe -WorkingDirectory $installDirFull
+    Write-Host "Started Sound Transportation."
+}
+
+Remove-Item -LiteralPath $backupConfig -Force -ErrorAction SilentlyContinue
+Write-Host "Install/update complete."
 
 function Set-StartupShortcut {
     param(
@@ -86,10 +68,6 @@ function Set-StartupShortcut {
     )
 
     $exePath = Join-Path $InstallDir "SoundTransportation.Mixer.exe"
-    if (!(Test-Path -LiteralPath $exePath)) {
-        throw "Installed exe not found: $exePath"
-    }
-
     $startupDir = Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs\Startup"
     try {
         New-Item -ItemType Directory -Force $startupDir | Out-Null
@@ -109,10 +87,8 @@ function New-Shortcut {
     param(
         [Parameter(Mandatory = $true)]
         [string]$ShortcutPath,
-
         [Parameter(Mandatory = $true)]
         [string]$TargetPath,
-
         [Parameter(Mandatory = $true)]
         [string]$WorkingDirectory
     )

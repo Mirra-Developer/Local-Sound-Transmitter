@@ -41,7 +41,7 @@ public sealed class MixerSampleProvider : ISampleProvider
                     continue;
                 }
 
-                var gain = channel.Volume;
+                var gain = channel.EffectiveVolume;
                 mixedLeft += left * gain;
                 mixedRight += right * gain;
             }

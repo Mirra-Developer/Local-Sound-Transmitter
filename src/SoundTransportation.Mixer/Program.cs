@@ -9,12 +9,14 @@ if (!HasConfiguredUrl(args))
 
 builder.Services.AddSingleton<ChannelRegistry>();
 builder.Services.AddSingleton<AppSettingsStore>();
+builder.Services.AddSingleton<ChannelFadeService>();
 builder.Services.AddHostedService<UdpAudioReceiver>();
 builder.Services.AddHostedService<LocalLoopbackCaptureService>();
 builder.Services.AddHostedService<IntegratedSenderService>();
 builder.Services.AddHostedService<AudioOutputService>();
 builder.Services.AddHostedService<LocalSessionMuteService>();
 builder.Services.AddHostedService<BrowserLauncherService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<ChannelFadeService>());
 
 var app = builder.Build();
 
@@ -111,6 +113,29 @@ app.MapPatch("/api/channels/{id:guid}", (Guid id, ChannelPatch patch, ChannelReg
     return Results.Ok(ChannelDto.FromChannel(channel));
 });
 
+app.MapPost("/api/control/focus-channel", (FocusChannelCommand command, ChannelRegistry registry, ChannelFadeService fades) =>
+{
+    var channel = registry.FindChannel(command.ChannelId, command.ChannelName, command.SourceIp);
+    if (channel is null)
+    {
+        return Results.NotFound(new { message = "Channel not found." });
+    }
+
+    var targetVolume = command.VolumePercent is not null
+        ? Math.Clamp(command.VolumePercent.Value / 100f, 0f, 2f)
+        : Math.Clamp(command.Volume ?? 1f, 0f, 2f);
+    var duration = TimeSpan.FromMilliseconds(Math.Clamp(command.DurationMs ?? 1000, 0, 60_000));
+
+    fades.FocusChannel(channel.Id, targetVolume, duration);
+    return Results.Ok(new
+    {
+        focusedChannelId = channel.Id,
+        focusedChannelName = channel.Name,
+        targetVolume,
+        durationMs = (int)duration.TotalMilliseconds
+    });
+});
+
 app.MapGet("/api/status", (IConfiguration configuration) => new
 {
     udpPort = configuration.GetValue("Audio:UdpPort", 5055),
@@ -155,6 +180,8 @@ public sealed record ChannelCreate(string Name, string? SourceIp, float? Volume,
 
 public sealed record ChannelPatch(string? Name, string? SourceIp, float? Volume, bool? Muted, bool? Solo, bool? OutputEnabled);
 
+public sealed record FocusChannelCommand(Guid? ChannelId, string? ChannelName, string? SourceIp, float? Volume, float? VolumePercent, int? DurationMs);
+
 public sealed record ChannelDto(
     Guid Id,
     string Name,
@@ -162,6 +189,7 @@ public sealed record ChannelDto(
     string? LastSourceIp,
     bool IsLocalLoopback,
     float Volume,
+    float EffectiveVolume,
     bool Muted,
     bool Solo,
     bool OutputEnabled,
@@ -179,6 +207,7 @@ public sealed record ChannelDto(
             channel.LastSourceIp,
             channel.IsLocalLoopback,
             channel.Volume,
+            channel.EffectiveVolume,
             channel.Muted,
             channel.Solo,
             channel.OutputEnabled,

@@ -116,6 +116,20 @@ This creates:
 release\SoundTransportation-2026.08.25.1.zip
 ```
 
+This zip is the unified package for receiver PCs and transmitter PCs. Extract it on any store PC and double-click:
+
+```text
+install.bat
+```
+
+The installer copies the app to:
+
+```text
+C:\SoundTransportation
+```
+
+It preserves existing `appsettings.json`, creates an auto-start shortcut, and starts the app.
+
 Install or update one local PC from a zip:
 
 ```powershell
@@ -128,7 +142,7 @@ Default install directory:
 C:\SoundTransportation
 ```
 
-The updater stops the installed app, replaces program files, preserves existing `appsettings.json`, and restarts the app.
+The updater stops the installed app, replaces program files, preserves existing `appsettings.json`, creates an auto-start shortcut, and restarts the app.
 
 For multiple stores, copy the template:
 
@@ -158,6 +172,50 @@ Remote deployment requirements:
 - Firewalls allow WinRM traffic.
 
 If remote PowerShell is not available, send the zip plus `scripts\install-update-local.ps1` to the store and run the local install command there.
+
+## External Control
+
+Another program can control the receiver/master PC through HTTP.
+
+Focus one channel by channel name, fade it to 100%, and fade all other channels to 0% over 1 second:
+
+```http
+POST /api/control/focus-channel
+Content-Type: application/json
+
+{
+  "channelName": "Computer A",
+  "volumePercent": 100,
+  "durationMs": 1000
+}
+```
+
+Focus by source IP:
+
+```json
+{
+  "sourceIp": "192.168.1.101",
+  "volumePercent": 80,
+  "durationMs": 1000
+}
+```
+
+Focus by channel ID:
+
+```json
+{
+  "channelId": "a2ff5ade-dfb7-5732-6b54-29b82c5c5ffa",
+  "volume": 0.75,
+  "durationMs": 1000
+}
+```
+
+Notes:
+
+- `volumePercent` accepts `0` to `200`.
+- `volume` accepts `0.0` to `2.0`.
+- `durationMs` accepts `0` to `60000`.
+- The focus command uses volume fading, not the UI Solo button, so the close/open transition is gradual.
 
 ## Receiver Example
 
@@ -248,6 +306,19 @@ List channels:
 
 ```http
 GET /api/channels
+```
+
+Focus one channel and fade other channels out:
+
+```http
+POST /api/control/focus-channel
+Content-Type: application/json
+
+{
+  "channelName": "Computer A",
+  "volumePercent": 100,
+  "durationMs": 1000
+}
 ```
 
 Update live channel state:
