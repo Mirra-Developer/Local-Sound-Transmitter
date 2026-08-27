@@ -87,7 +87,6 @@ function createChannelNode(id) {
     sourceIp: root.querySelector(".source-ip input"),
     bind: root.querySelector(".bind"),
     mute: root.querySelector(".mute"),
-    solo: root.querySelector(".solo"),
     output: root.querySelector(".output")
   };
 
@@ -106,7 +105,6 @@ function createChannelNode(id) {
   });
   node.bind.addEventListener("click", () => patchChannel(id, { sourceIp: node.sourceIp.value.trim() }));
   node.mute.addEventListener("click", () => patchChannel(id, { muted: !node.mute.classList.contains("active") }));
-  node.solo.addEventListener("click", () => patchChannel(id, { solo: !node.solo.classList.contains("active") }));
   node.output.addEventListener("click", () => patchChannel(id, { outputEnabled: !node.output.classList.contains("active") }));
 
   nodes.set(id, node);
@@ -127,7 +125,6 @@ function renderChannel(node, channel) {
   node.meter.style.width = `${Math.min(100, Math.round(channel.level * 100))}%`;
   node.mute.classList.toggle("active", channel.muted);
   node.mute.classList.toggle("danger", true);
-  node.solo.classList.toggle("active", channel.solo);
   node.output.classList.toggle("active", channel.outputEnabled);
   node.state.classList.toggle("stale", Date.now() - Date.parse(channel.lastSeenUtc) > 3000);
 }

@@ -10,11 +10,16 @@ if (!HasConfiguredUrl(args))
 builder.Services.AddSingleton<ChannelRegistry>();
 builder.Services.AddSingleton<AppSettingsStore>();
 builder.Services.AddSingleton<ChannelFadeService>();
-builder.Services.AddHostedService<UdpAudioReceiver>();
-builder.Services.AddHostedService<LocalLoopbackCaptureService>();
-builder.Services.AddHostedService<IntegratedSenderService>();
-builder.Services.AddHostedService<AudioOutputService>();
-builder.Services.AddHostedService<LocalSessionMuteService>();
+builder.Services.AddSingleton<UdpAudioReceiver>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<UdpAudioReceiver>());
+builder.Services.AddSingleton<LocalLoopbackCaptureService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<LocalLoopbackCaptureService>());
+builder.Services.AddSingleton<IntegratedSenderService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<IntegratedSenderService>());
+builder.Services.AddSingleton<AudioOutputService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<AudioOutputService>());
+builder.Services.AddSingleton<LocalSessionMuteService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<LocalSessionMuteService>());
 builder.Services.AddHostedService<BrowserLauncherService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<ChannelFadeService>());
 
@@ -48,11 +53,6 @@ app.MapPost("/api/channels", (ChannelCreate create, ChannelRegistry registry) =>
         channel.Muted = create.Muted.Value;
     }
 
-    if (create.Solo is not null)
-    {
-        channel.Solo = create.Solo.Value;
-    }
-
     if (create.OutputEnabled is not null)
     {
         channel.OutputEnabled = create.OutputEnabled.Value;
@@ -84,22 +84,6 @@ app.MapPatch("/api/channels/{id:guid}", (Guid id, ChannelPatch patch, ChannelReg
         channel.Muted = patch.Muted.Value;
     }
 
-    if (patch.Solo is not null)
-    {
-        if (patch.Solo.Value)
-        {
-            foreach (var otherChannel in registry.GetChannels())
-            {
-                if (otherChannel.Id != channel.Id)
-                {
-                    otherChannel.Solo = false;
-                }
-            }
-        }
-
-        channel.Solo = patch.Solo.Value;
-    }
-
     if (patch.OutputEnabled is not null)
     {
         channel.OutputEnabled = patch.OutputEnabled.Value;
@@ -113,7 +97,7 @@ app.MapPatch("/api/channels/{id:guid}", (Guid id, ChannelPatch patch, ChannelReg
     return Results.Ok(ChannelDto.FromChannel(channel));
 });
 
-app.MapPost("/api/control/focus-channel", (FocusChannelCommand command, ChannelRegistry registry, ChannelFadeService fades) =>
+app.MapPost("/api/control/focus-channel", (FocusChannelCommand command, ChannelRegistry registry, ChannelFadeService fades, LocalSessionMuteService localSessions) =>
 {
     var channel = registry.FindChannel(command.ChannelId, command.ChannelName, command.SourceIp);
     if (channel is null)
@@ -126,7 +110,7 @@ app.MapPost("/api/control/focus-channel", (FocusChannelCommand command, ChannelR
         : Math.Clamp(command.Volume ?? 1f, 0f, 2f);
     var duration = TimeSpan.FromMilliseconds(Math.Clamp(command.DurationMs ?? 1000, 0, 60_000));
 
-    fades.FocusChannel(channel.Id, targetVolume, duration);
+    fades.FocusChannel(channel.Id, targetVolume, duration, localSessions);
     return Results.Ok(new
     {
         focusedChannelId = channel.Id,
@@ -149,14 +133,19 @@ app.MapGet("/api/status", (IConfiguration configuration) => new
 
 app.MapGet("/api/config", (AppSettingsStore settingsStore) => settingsStore.Read());
 
-app.MapPut("/api/config", (AppConfigDto config, AppSettingsStore settingsStore, ChannelRegistry registry) =>
+app.MapPut("/api/config", (AppConfigDto config, AppSettingsStore settingsStore, IConfigurationRoot configurationRoot, ChannelRegistry registry, UdpAudioReceiver receiver, IntegratedSenderService sender, AudioOutputService output, LocalLoopbackCaptureService localLoopback) =>
 {
     settingsStore.Save(config);
+    configurationRoot.Reload();
     registry.ApplyReceiverConfig(config.Receiver);
+    receiver.Reload();
+    sender.Reload();
+    output.Reload();
+    localLoopback.Reload();
     return new ConfigSaveResult(
         true,
-        true,
-        "Configuration saved. Receiver channel bindings were applied now; turn off auto create channels to hide unconfigured remote sources. Restart the app for transmitter, port, output, and service enable changes.",
+        false,
+        "Configuration saved and receiver bindings applied. Runtime audio services will reload the new settings immediately.",
         settingsStore.Read());
 });
 
@@ -176,9 +165,9 @@ static bool HasConfiguredUrl(string[] args)
         arg.StartsWith("urls=", StringComparison.OrdinalIgnoreCase));
 }
 
-public sealed record ChannelCreate(string Name, string? SourceIp, float? Volume, bool? Muted, bool? Solo, bool? OutputEnabled);
+public sealed record ChannelCreate(string Name, string? SourceIp, float? Volume, bool? Muted, bool? OutputEnabled);
 
-public sealed record ChannelPatch(string? Name, string? SourceIp, float? Volume, bool? Muted, bool? Solo, bool? OutputEnabled);
+public sealed record ChannelPatch(string? Name, string? SourceIp, float? Volume, bool? Muted, bool? OutputEnabled);
 
 public sealed record FocusChannelCommand(Guid? ChannelId, string? ChannelName, string? SourceIp, float? Volume, float? VolumePercent, int? DurationMs);
 
@@ -191,7 +180,6 @@ public sealed record ChannelDto(
     float Volume,
     float EffectiveVolume,
     bool Muted,
-    bool Solo,
     bool OutputEnabled,
     float Level,
     int QueuedSamples,
@@ -209,7 +197,6 @@ public sealed record ChannelDto(
             channel.Volume,
             channel.EffectiveVolume,
             channel.Muted,
-            channel.Solo,
             channel.OutputEnabled,
             channel.Level,
             channel.QueuedSamples,

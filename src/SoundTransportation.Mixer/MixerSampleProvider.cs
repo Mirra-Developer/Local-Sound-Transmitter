@@ -20,7 +20,6 @@ public sealed class MixerSampleProvider : ISampleProvider
         Array.Clear(buffer, offset, count);
 
         var channels = _registry.GetChannels().ToArray();
-        var soloActive = channels.Any(channel => channel.Solo);
         var frameCount = count / AudioProtocol.Channels;
 
         for (var frame = 0; frame < frameCount; frame++)
@@ -35,7 +34,7 @@ public sealed class MixerSampleProvider : ISampleProvider
                     continue;
                 }
 
-                var shouldOutput = channel.OutputEnabled && !channel.Muted && (!soloActive || channel.Solo);
+                var shouldOutput = channel.OutputEnabled && !channel.Muted;
                 if (!shouldOutput)
                 {
                     continue;

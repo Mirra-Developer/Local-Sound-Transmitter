@@ -24,7 +24,6 @@ public sealed class ChannelRegistry
             channel.SourceIp = sourceIp;
             channel.Volume = Math.Clamp(section.GetValue("Volume", channel.Volume), 0f, 2f);
             channel.Muted = section.GetValue("Muted", channel.Muted);
-            channel.Solo = section.GetValue("Solo", channel.Solo);
             channel.OutputEnabled = section.GetValue("OutputEnabled", channel.OutputEnabled);
 
             if (sourceIp is not null)

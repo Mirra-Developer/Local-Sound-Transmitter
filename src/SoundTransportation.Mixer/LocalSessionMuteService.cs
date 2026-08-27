@@ -11,6 +11,7 @@ public sealed class LocalSessionMuteService : BackgroundService
     private readonly HashSet<int> _mutedProcessIds = [];
     private readonly int _ownProcessId = Environment.ProcessId;
     private bool _mutingActive;
+    private volatile bool _remoteFocus;
 
     public LocalSessionMuteService(
         ChannelRegistry registry,
@@ -24,16 +25,11 @@ public sealed class LocalSessionMuteService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!_configuration.GetValue("Audio:LocalSessionMuteOnRemoteSolo:Enabled", true))
-        {
-            return;
-        }
-
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                var shouldMuteLocalSessions = _registry.GetChannels().Any(channel => channel.Solo && !channel.IsLocalLoopback);
+                var shouldMuteLocalSessions = _remoteFocus && _configuration.GetValue("Audio:LocalSessionMuteOnRemoteSolo:Enabled", true);
                 if (shouldMuteLocalSessions)
                 {
                     MuteLocalSessions();
@@ -56,6 +52,15 @@ public sealed class LocalSessionMuteService : BackgroundService
     {
         RestoreLocalSessions();
         await base.StopAsync(cancellationToken);
+    }
+
+    public void SetRemoteFocus(bool enabled)
+    {
+        _remoteFocus = enabled;
+        if (!enabled && _mutingActive)
+        {
+            RestoreLocalSessions();
+        }
     }
 
     private void MuteLocalSessions()

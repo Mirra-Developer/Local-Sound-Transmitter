@@ -25,17 +25,23 @@ public sealed class LocalLoopbackCaptureService : IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        if (!_configuration.GetValue("Audio:LocalLoopback:Enabled", true))
-        {
-            return Task.CompletedTask;
-        }
+        Reload();
+        return Task.CompletedTask;
+    }
+
+    public void Reload()
+    {
+        _capture?.StopRecording();
+        _capture?.Dispose();
+        _capture = null;
+        if (!_configuration.GetValue("Audio:LocalLoopback:Enabled", true)) return;
 
         var name = _configuration.GetValue<string>("Audio:LocalLoopback:Name") ?? $"{Environment.MachineName} Local";
         var outputEnabled = _configuration.GetValue("Audio:LocalLoopback:OutputEnabled", false);
         var channel = _registry.UpsertHello(LocalChannelId, name, forceCreate: true);
         if (channel is null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         channel.OutputEnabled = outputEnabled;
@@ -58,7 +64,6 @@ public sealed class LocalLoopbackCaptureService : IHostedService, IDisposable
             outputEnabled);
 
         _capture.StartRecording();
-        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

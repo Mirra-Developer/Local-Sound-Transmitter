@@ -44,7 +44,6 @@ public sealed class AudioChannel
         set => Volatile.Write(ref _effectiveVolume, Math.Clamp(value, 0f, 2f));
     }
     public bool Muted { get; set; }
-    public bool Solo { get; set; }
     public bool OutputEnabled { get; set; } = true;
     public DateTimeOffset LastSeenUtc { get; set; }
     public uint LastSequence { get; set; }

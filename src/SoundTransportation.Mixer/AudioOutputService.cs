@@ -16,10 +16,16 @@ public sealed class AudioOutputService : IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        if (!_configuration.GetValue("Audio:Output:Enabled", true))
-        {
-            return Task.CompletedTask;
-        }
+        Reload();
+        return Task.CompletedTask;
+    }
+
+    public void Reload()
+    {
+        _output?.Stop();
+        _output?.Dispose();
+        _output = null;
+        if (!_configuration.GetValue("Audio:Output:Enabled", true)) return;
 
         var provider = new MixerSampleProvider(_registry);
         _output = new WaveOutEvent
@@ -28,7 +34,6 @@ public sealed class AudioOutputService : IHostedService, IDisposable
         };
         _output.Init(provider);
         _output.Play();
-        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

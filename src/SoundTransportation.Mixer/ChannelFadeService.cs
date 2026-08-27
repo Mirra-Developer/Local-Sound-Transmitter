@@ -45,15 +45,23 @@ public sealed class ChannelFadeService : BackgroundService
             setMutedAtEnd);
     }
 
-    public void FocusChannel(Guid channelId, float activeVolume, TimeSpan duration)
+    public void FocusChannel(Guid channelId, float activeVolume, TimeSpan duration, LocalSessionMuteService localSessions)
     {
         foreach (var channel in _registry.GetChannels())
         {
             var isActive = channel.Id == channelId;
-            channel.Solo = false;
+            if (channel.IsLocalLoopback)
+            {
+                channel.Muted = !isActive;
+                channel.OutputEnabled = false;
+                continue;
+            }
+
             FadeTo(channel.Id, isActive ? activeVolume : 0f, duration, setMutedAtEnd: !isActive);
             channel.OutputEnabled = true;
         }
+
+        localSessions.SetRemoteFocus(!(_registry.GetChannel(channelId)?.IsLocalLoopback ?? false));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

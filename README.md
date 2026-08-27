@@ -215,7 +215,7 @@ Notes:
 - `volumePercent` accepts `0` to `200`.
 - `volume` accepts `0.0` to `2.0`.
 - `durationMs` accepts `0` to `60000`.
-- The focus command uses volume fading, not the UI Solo button, so the close/open transition is gradual.
+- The focus command uses volume fading and Mute state, so the close/open transition is gradual.
 
 ## Receiver Example
 
@@ -331,7 +331,6 @@ Content-Type: application/json
   "sourceIp": "192.168.1.101",
   "volume": 0.75,
   "muted": false,
-  "solo": false,
   "outputEnabled": true
 }
 ```

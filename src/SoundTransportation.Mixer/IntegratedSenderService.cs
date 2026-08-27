@@ -25,10 +25,16 @@ public sealed class IntegratedSenderService : IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        if (!_configuration.GetValue("Transmitter:Enabled", false))
-        {
-            return Task.CompletedTask;
-        }
+        Reload();
+        return Task.CompletedTask;
+    }
+
+    public void Reload()
+    {
+        StopAsync(CancellationToken.None).GetAwaiter().GetResult();
+        foreach (var target in _targets) target.Dispose();
+        _targets.Clear();
+        if (!_configuration.GetValue("Transmitter:Enabled", false)) return;
 
         _name = _configuration.GetValue<string>("Transmitter:Name") ?? Environment.MachineName;
         _senderId = ReadSenderId();
@@ -45,7 +51,7 @@ public sealed class IntegratedSenderService : IHostedService, IDisposable
         if (_targets.Count == 0)
         {
             _logger.LogWarning("Transmitter is enabled but no valid targets are configured");
-            return Task.CompletedTask;
+            return;
         }
 
         _capture = new WasapiLoopbackCapture();
@@ -61,7 +67,6 @@ public sealed class IntegratedSenderService : IHostedService, IDisposable
         _helloTimer = new Timer(_ => SendToTargets(_helloPacket), null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
         _logger.LogInformation("Transmitter '{Name}' started with id {SenderId}; capture format {Format}", _name, _senderId, _capture.WaveFormat);
         _capture.StartRecording();
-        return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

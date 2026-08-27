@@ -3,31 +3,58 @@ using SoundTransportation.Shared;
 
 namespace SoundTransportation.Mixer;
 
-public sealed class UdpAudioReceiver : BackgroundService
+public sealed class UdpAudioReceiver : IHostedService, IDisposable
 {
     private readonly ChannelRegistry _registry;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<UdpAudioReceiver> _logger;
-    private readonly int _port;
-    private readonly bool _enabled;
+    private CancellationTokenSource? _runCts;
+    private Task? _runTask;
 
     public UdpAudioReceiver(ChannelRegistry registry, IConfiguration configuration, ILogger<UdpAudioReceiver> logger)
     {
         _registry = registry;
+        _configuration = configuration;
         _logger = logger;
-        _port = configuration.GetValue("Audio:UdpPort", 5055);
-        _enabled = configuration.GetValue("Receiver:Enabled", true);
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public Task StartAsync(CancellationToken cancellationToken)
     {
-        if (!_enabled)
+        Reload();
+        return Task.CompletedTask;
+    }
+
+    public void Reload()
+    {
+        _runCts?.Cancel();
+        _runCts?.Dispose();
+        _runCts = new CancellationTokenSource();
+        _runTask = RunAsync(_runCts.Token);
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        _runCts?.Cancel();
+        if (_runTask is not null)
+        {
+            await _runTask.WaitAsync(cancellationToken);
+        }
+    }
+
+    public void Dispose() => _runCts?.Dispose();
+
+    private async Task RunAsync(CancellationToken stoppingToken)
+    {
+        var enabled = _configuration.GetValue("Receiver:Enabled", true);
+        var port = _configuration.GetValue("Audio:UdpPort", 5055);
+        if (!enabled)
         {
             _logger.LogInformation("Receiver is disabled");
             return;
         }
 
-        using var udp = new UdpClient(_port);
-        _logger.LogInformation("Listening for sender audio on UDP {Port}", _port);
+        using var udp = new UdpClient(port);
+        _logger.LogInformation("Listening for sender audio on UDP {Port}", port);
 
         while (!stoppingToken.IsCancellationRequested)
         {
