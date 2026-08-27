@@ -40,6 +40,8 @@ pause
 @echo off
 cd /d "%~dp0"
 start "" SoundTransportation.Mixer.exe
+timeout /t 2 /nobreak >nul
+start "" http://127.0.0.1:5080
 "@ | Set-Content -LiteralPath (Join-Path $stageDir "start.bat") -Encoding ASCII
 
 @"
