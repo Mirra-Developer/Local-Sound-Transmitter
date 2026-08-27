@@ -72,10 +72,8 @@ Write-Host "Installing Sound Transportation to $installDirFull"
 
 Get-Process SoundTransportation.Mixer -ErrorAction SilentlyContinue | ForEach-Object {
     try {
-        if ($_.Path -and $_.Path.StartsWith($installDirFull, [System.StringComparison]::OrdinalIgnoreCase)) {
-            Write-Host "Stopping running process $($_.Id)"
-            Stop-Process -Id $_.Id -Force
-        }
+        Write-Host "Stopping running process $($_.Id) from $($_.Path)"
+        Stop-Process -Id $_.Id -Force
     } catch {
         Write-Warning "Could not inspect or stop process $($_.Id): $($_.Exception.Message)"
     }
