@@ -133,10 +133,13 @@ app.MapGet("/api/status", (IConfiguration configuration) => new
 
 app.MapGet("/api/config", (AppSettingsStore settingsStore) => settingsStore.Read());
 
-app.MapPut("/api/config", (AppConfigDto config, AppSettingsStore settingsStore, IConfigurationRoot configurationRoot, ChannelRegistry registry, UdpAudioReceiver receiver, IntegratedSenderService sender, AudioOutputService output, LocalLoopbackCaptureService localLoopback) =>
+app.MapPut("/api/config", (AppConfigDto config, AppSettingsStore settingsStore, IConfiguration configuration, ChannelRegistry registry, UdpAudioReceiver receiver, IntegratedSenderService sender, AudioOutputService output, LocalLoopbackCaptureService localLoopback) =>
 {
     settingsStore.Save(config);
-    configurationRoot.Reload();
+    if (configuration is IConfigurationRoot configurationRoot)
+    {
+        configurationRoot.Reload();
+    }
     registry.ApplyReceiverConfig(config.Receiver);
     receiver.Reload();
     sender.Reload();
