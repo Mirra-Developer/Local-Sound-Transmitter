@@ -130,6 +130,14 @@ C:\SoundTransportation
 
 It preserves existing `appsettings.json`, creates an auto-start shortcut, and starts the app.
 
+To remove the installer-created auto-start shortcut without removing the program, run:
+
+```text
+remove-autostart.bat
+```
+
+To add a manual startup entry, create a shortcut to `start.bat` and place it in the Windows Startup folder. Press `Win+R`, enter `shell:startup`, and place the shortcut there.
+
 Install or update one local PC from a zip:
 
 ```powershell

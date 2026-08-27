@@ -28,6 +28,7 @@ dotnet publish src\SoundTransportation.Mixer `
 Set-Content -LiteralPath (Join-Path $stageDir "VERSION.txt") -Value $Version -Encoding UTF8
 Copy-Item -LiteralPath (Join-Path $root "scripts\install-from-folder.ps1") -Destination (Join-Path $stageDir "install-from-folder.ps1") -Force
 Copy-Item -LiteralPath (Join-Path $root "scripts\install-update-local.ps1") -Destination (Join-Path $stageDir "install-update-local.ps1") -Force
+Copy-Item -LiteralPath (Join-Path $root "scripts\remove-autostart.bat") -Destination (Join-Path $stageDir "remove-autostart.bat") -Force
 
 @"
 @echo off
