@@ -20,14 +20,31 @@ public sealed class UdpAudioReceiver : IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        Reload();
-        return Task.CompletedTask;
+        return ReloadAsync();
     }
 
     public void Reload()
     {
-        _runCts?.Cancel();
-        _runCts?.Dispose();
+        ReloadAsync().GetAwaiter().GetResult();
+    }
+
+    private async Task ReloadAsync()
+    {
+        var previousCts = _runCts;
+        var previousTask = _runTask;
+        previousCts?.Cancel();
+        if (previousTask is not null)
+        {
+            try
+            {
+                await previousTask;
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        previousCts?.Dispose();
         _runCts = new CancellationTokenSource();
         _runTask = RunAsync(_runCts.Token);
     }

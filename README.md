@@ -62,7 +62,7 @@ Use the `Config` tab to edit:
 
 Click `Save Config` to write changes to `appsettings.json`.
 
-Receiver channel IP bindings are applied immediately. Service-level changes, including transmitter targets, UDP port, receiver/transmitter enabled flags, output enabled, and local loopback enabled, should be applied by restarting the app.
+All settings are applied immediately after clicking `Save Config`, including transmitter targets, UDP port, receiver/transmitter enabled flags, output enabled, and local loopback enabled.
 
 ## Ports
 
