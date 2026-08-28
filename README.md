@@ -128,7 +128,7 @@ The installer copies the app to:
 C:\SoundTransportation
 ```
 
-It preserves existing `appsettings.json`, creates an auto-start shortcut, and starts the app.
+It preserves existing `appsettings.json`, removes any installer-created auto-start shortcut, and does not start the app. Start it manually with `start.bat`.
 
 To remove the installer-created auto-start shortcut without removing the program, run:
 
@@ -136,7 +136,7 @@ To remove the installer-created auto-start shortcut without removing the program
 remove-autostart.bat
 ```
 
-To add a manual startup entry, create a shortcut to `start.bat` and place it in the Windows Startup folder. Press `Win+R`, enter `shell:startup`, and place the shortcut there.
+To add a manual startup entry later, create a shortcut to `start.bat` and place it in the Windows Startup folder. Press `Win+R`, enter `shell:startup`, and place the shortcut there.
 
 Install or update one local PC from a zip:
 
@@ -150,7 +150,7 @@ Default install directory:
 C:\SoundTransportation
 ```
 
-The updater stops the installed app, replaces program files, preserves existing `appsettings.json`, creates an auto-start shortcut, and restarts the app.
+The updater stops the installed app, replaces program files, preserves existing `appsettings.json`, removes any installer-created auto-start shortcut, and does not restart the app.
 
 For multiple stores, copy the template:
 

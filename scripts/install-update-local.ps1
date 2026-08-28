@@ -59,6 +59,20 @@ function Set-StartupShortcut {
     }
 }
 
+function Remove-StartupShortcut {
+    $shortcutName = "Sound Transportation.lnk"
+    @(
+        (Join-Path $env:ProgramData "Microsoft\Windows\Start Menu\Programs\Startup"),
+        ([Environment]::GetFolderPath("Startup"))
+    ) | ForEach-Object {
+        $shortcutPath = Join-Path $_ $shortcutName
+        if (Test-Path -LiteralPath $shortcutPath) {
+            Remove-Item -LiteralPath $shortcutPath -Force
+            Write-Host "Startup shortcut removed: $shortcutPath"
+        }
+    }
+}
+
 if (!(Test-Path -LiteralPath $PackageZip)) {
     throw "Package not found: $PackageZip"
 }
@@ -115,6 +129,8 @@ try {
 
     if (!$NoStartup) {
         Set-StartupShortcut -InstallDir $installDirFull
+    } else {
+        Remove-StartupShortcut
     }
 
     Write-Host "Install/update complete."
