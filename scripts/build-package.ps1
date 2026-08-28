@@ -39,8 +39,14 @@ pause
 
 @"
 @echo off
-cd /d "%~dp0"
-start "" SoundTransportation.Mixer.exe
+set "INSTALL_DIR=C:\SoundTransportation"
+if exist "%INSTALL_DIR%\SoundTransportation.Mixer.exe" (
+  cd /d "%INSTALL_DIR%"
+  start "" "%INSTALL_DIR%\SoundTransportation.Mixer.exe"
+) else (
+  cd /d "%~dp0"
+  start "" "%~dp0SoundTransportation.Mixer.exe"
+)
 timeout /t 2 /nobreak >nul
 start "" http://127.0.0.1:5080
 "@ | Set-Content -LiteralPath (Join-Path $stageDir "start.bat") -Encoding ASCII
