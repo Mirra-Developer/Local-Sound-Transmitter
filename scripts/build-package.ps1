@@ -33,7 +33,7 @@ Copy-Item -LiteralPath (Join-Path $root "scripts\remove-autostart.bat") -Destina
 @"
 @echo off
 cd /d "%~dp0"
-powershell.exe -ExecutionPolicy Bypass -File "%~dp0install-from-folder.ps1" -NoStart -NoStartup
+powershell.exe -ExecutionPolicy Bypass -File "%~dp0install-from-folder.ps1" -NoStart
 pause
 "@ | Set-Content -LiteralPath (Join-Path $stageDir "install.bat") -Encoding ASCII
 
