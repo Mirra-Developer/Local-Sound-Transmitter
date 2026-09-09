@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace SoundTransportation.Mixer;
 
@@ -46,6 +47,15 @@ public sealed class AudioChannel
     public bool Muted { get; set; }
     public bool OutputEnabled { get; set; } = true;
     public DateTimeOffset LastSeenUtc { get; set; }
+    private long _lastAudioTicks;
+    private long _lastAudioMonotonic;
+    public bool HasFreshAudio(TimeSpan maximumAge)
+    {
+        var timestamp = Interlocked.Read(ref _lastAudioMonotonic);
+        return timestamp != 0 && Stopwatch.GetElapsedTime(timestamp) < maximumAge;
+    }
+    public DateTimeOffset? LastAudioUtc => Interlocked.Read(ref _lastAudioTicks) is var ticks && ticks > 0
+        ? new DateTimeOffset(ticks, TimeSpan.Zero) : null;
     public uint LastSequence { get; set; }
 
     public int QueuedSamples => Volatile.Read(ref _queuedSamples);
@@ -59,6 +69,8 @@ public sealed class AudioChannel
         }
 
         LastSeenUtc = DateTimeOffset.UtcNow;
+        Interlocked.Exchange(ref _lastAudioTicks, LastSeenUtc.UtcTicks);
+        Interlocked.Exchange(ref _lastAudioMonotonic, Stopwatch.GetTimestamp());
         LastSequence = sequence;
         LastSourceIp = sourceIp;
         UpdateLevel(samples);

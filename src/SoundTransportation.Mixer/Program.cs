@@ -15,22 +15,27 @@ if (!HasConfiguredUrl(args))
 }
 
 builder.Services.AddSingleton<ChannelRegistry>();
+builder.Services.AddSingleton<AvCrossfadeEngine>();
 builder.Services.AddSingleton<AppSettingsStore>();
 builder.Services.AddSingleton<ChannelFadeService>();
 builder.Services.AddSingleton<UdpAudioReceiver>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<UdpAudioReceiver>());
 builder.Services.AddSingleton<LocalLoopbackCaptureService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<LocalLoopbackCaptureService>());
+if (!AvApi.Enabled(builder.Configuration))
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<LocalLoopbackCaptureService>());
 builder.Services.AddSingleton<IntegratedSenderService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<IntegratedSenderService>());
 builder.Services.AddSingleton<AudioOutputService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<AudioOutputService>());
 builder.Services.AddSingleton<LocalSessionMuteService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<LocalSessionMuteService>());
+if (!AvApi.Enabled(builder.Configuration))
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<LocalSessionMuteService>());
 builder.Services.AddHostedService<TrayService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<ChannelFadeService>());
+if (!AvApi.Enabled(builder.Configuration))
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<ChannelFadeService>());
 
 var app = builder.Build();
+app.MapAvApi();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();

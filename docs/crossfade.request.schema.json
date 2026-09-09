@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:mirra:av:1:crossfade-request",
+  "title": "Mirra AV P1 audio-only crossfade",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "requestId", "engineInstanceId", "fromTrackId", "toTrackId", "startFrame", "durationFrames", "curve", "toGain"],
+  "properties": {
+    "protocolVersion": { "const": "1.0" },
+    "requestId": { "type": "string", "format": "uuid" },
+    "engineInstanceId": { "type": "string", "format": "uuid" },
+    "fromTrackId": { "type": "string", "format": "uuid" },
+    "toTrackId": { "type": "string", "format": "uuid" },
+    "startFrame": { "type": "integer", "minimum": 0, "maximum": 9007199251860991 },
+    "durationFrames": { "type": "integer", "minimum": 1, "maximum": 2880000 },
+    "curve": { "enum": ["linear", "equalPower"] },
+    "toGain": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "$comment": "Runtime additionally rejects empty UUIDs, equal tracks, stale instance, insufficient lead time, unready audio, invalid A/B gain state, busy transitions and conflicting retry IDs. Schema alone is not scheduling authorization."
+}

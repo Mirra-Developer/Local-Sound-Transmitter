@@ -1,0 +1,3 @@
+# Shared contract hashes must survive Windows/Linux checkout.
+mirra-av-contract-v1.md text eol=lf
+crossfade.request.schema.json text eol=lf

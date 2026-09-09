@@ -6,10 +6,12 @@ namespace SoundTransportation.Mixer;
 public sealed class MixerSampleProvider : ISampleProvider
 {
     private readonly ChannelRegistry _registry;
+    private readonly AvCrossfadeEngine? _avEngine;
 
-    public MixerSampleProvider(ChannelRegistry registry)
+    public MixerSampleProvider(ChannelRegistry registry, AvCrossfadeEngine? avEngine = null)
     {
         _registry = registry;
+        _avEngine = avEngine;
         WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(AudioProtocol.SampleRate, AudioProtocol.Channels);
     }
 
@@ -17,6 +19,7 @@ public sealed class MixerSampleProvider : ISampleProvider
 
     public int Read(float[] buffer, int offset, int count)
     {
+        if (_avEngine is not null) return _avEngine.Render(buffer, offset, count);
         Array.Clear(buffer, offset, count);
 
         var channels = _registry.GetChannels().ToArray();
