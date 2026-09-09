@@ -1,5 +1,17 @@
 # Sound Transportation
 
+## 中文项目文档
+
+部署、维护和开发请从 [文档索引](docs/README.md) 开始。文档按当前代码整理，已实现功能和待实现事项分开记录。
+
+- [部署与配置](docs/DEPLOYMENT.md)：安装、更新、自启动、A/B/C/D/E 配置。
+- [Control App 接口](docs/CONTROL_API.md)：请求示例、参数、运行状态与持久化。
+- [音频架构与限制](docs/ARCHITECTURE.md)：本地与远程路径、源码位置。
+- [故障排查](docs/TROUBLESHOOTING.md)：无声、旧页面、控制失败、自启动。
+- [开发与待办](docs/DEVELOPMENT.md)：构建发布、检查清单、Limiter 计划。
+
+当前本地 A 使用 Windows 应用音频会话静音/恢复，不支持与远程通道相同的音量渐变。具体限制见中文文档。
+
 LAN audio routing MVP for multiple Windows PCs.
 
 One executable can run as:
@@ -152,7 +164,7 @@ Default install directory:
 C:\SoundTransportation
 ```
 
-The updater stops the installed app, replaces program files, preserves existing `appsettings.json`, recreates the auto-start shortcut, and does not restart the app immediately.
+The PowerShell updater stops the installed app, replaces program files, preserves existing `appsettings.json`, and recreates the auto-start shortcut. Pass `-NoStart` to prevent an immediate restart. The packaged `install.bat` already passes `-NoStart`.
 
 For multiple stores, copy the template:
 
