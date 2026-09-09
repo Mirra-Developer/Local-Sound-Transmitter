@@ -1,6 +1,13 @@
 using SoundTransportation.Mixer;
 
-var builder = WebApplication.CreateBuilder(args);
+using var instance = new Mutex(false, @"Local\SoundTransportation.Mixer.Tray", out var firstInstance);
+if (!firstInstance) return;
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    ContentRootPath = AppContext.BaseDirectory
+});
 
 if (!HasConfiguredUrl(args))
 {
@@ -20,7 +27,7 @@ builder.Services.AddSingleton<AudioOutputService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<AudioOutputService>());
 builder.Services.AddSingleton<LocalSessionMuteService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<LocalSessionMuteService>());
-builder.Services.AddHostedService<BrowserLauncherService>();
+builder.Services.AddHostedService<TrayService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<ChannelFadeService>());
 
 var app = builder.Build();

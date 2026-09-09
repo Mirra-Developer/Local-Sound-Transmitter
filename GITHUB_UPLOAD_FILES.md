@@ -33,7 +33,7 @@ src/SoundTransportation.Mixer/Properties/launchSettings.json
 src/SoundTransportation.Mixer/AppSettingsStore.cs
 src/SoundTransportation.Mixer/AudioChannel.cs
 src/SoundTransportation.Mixer/AudioOutputService.cs
-src/SoundTransportation.Mixer/BrowserLauncherService.cs
+src/SoundTransportation.Mixer/TrayService.cs
 src/SoundTransportation.Mixer/ChannelFadeService.cs
 src/SoundTransportation.Mixer/ChannelRegistry.cs
 src/SoundTransportation.Mixer/IntegratedSenderService.cs

@@ -130,6 +130,8 @@ C:\SoundTransportation
 
 It preserves existing `appsettings.json`, creates the auto-start shortcut, and does not start the app immediately. The app will start automatically after Windows logs in; it can also be started manually with `start.bat`.
 
+The app runs in the Windows notification area without a console or automatic browser tabs. Right-click the Sound Transportation tray icon to open the management page or exit. Double-click also opens the page. Repeated starts in the same Windows session do not launch another instance. Existing `Ui:AutoOpen` values are ignored.
+
 To remove the installer-created auto-start shortcut without removing the program, run:
 
 ```text
