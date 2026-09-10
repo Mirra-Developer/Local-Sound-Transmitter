@@ -126,13 +126,15 @@ flowchart LR
 
 实际 Lobby DEV 完整动画 → Electron 共享 GPU 纹理 → Mirraflow 独立原生输出窗口。正常路径不执行像素 readback 或视频编码。已验证 4K30 / 4K60、独立呈现节奏、静止页面心跳、断源保帧、新 epoch 恢复及窗口消息线程停顿隔离；目前教学框仍为网页占位海报，尚未提供下面的媒体转场。原生窗口缩放查看，实际大屏扫描和长时运行待验收。
 
-### V1a+：提前验证完整 Lobby ↔ 一路 NDI（当前）
+### V1a+：提前验证完整 Lobby ↔ 一路 NDI（独立实验已完成）
 
 使用完整网页纹理作为 A、一路持续预热的 NDI 作为 B，进入 Mirraflow 现有 GPU 合成器并覆盖 Alpha 转场视频。先验证双向自动切点、200 次切换、真实断源/恢复、4K 输出缓冲与帧间隔；入口、源码边界和测试源规格见 [整场转场契约](mirra-lobby-ndi-switch-v1.md)。这一步不要求框内媒体图层已经完成。
 
-### V1b：框内视频 / NDI / 回放的实际转场（随后）
+### V1b：框内视频 / NDI / 回放的实际转场（教学→NDI 已有隔离完整流程）
 
 完成来源预热、Alpha 素材准备与自动切点，验证视频→NDI、NDI→视频、回放切换、重复点击、目标断开及恢复。记录准备等待与转场开始后的连续性，不用“最后能切过去”代替顺畅验收。
+
+新增 `lobby_show` 已把本地教学一次播放、框内 Alpha 特效切 NDI、第三阶段显示指令、全屏 NDI 和返回开场连成循环。当前采用同帧黑/白网页响应 atlas 与原生媒体合成，详见 [完整流程契约](mirra-lobby-full-show-v1.md) 和 [实测结果](mirra-lobby-full-show-validation.md)。它是单教学平面的受控实验；任意半透明回放边框、多媒体窗口和正式 Editor 来源注册仍需后续。
 
 ### V2：完整 Lobby 场景的全屏转场
 
@@ -153,8 +155,8 @@ flowchart LR
 
 2026-09-09 更新：联合开发和首轮测试集中在当前电脑，所有新增目录在 `C:\Mirra_Dev` 内。Lobby 使用 `mirra-lobby-hub-av-integration`，Mirraflow 使用新克隆的 `Mirraflow`，Sound 使用 `Local-Sound-Transmitter`；联合入口为 `mirra-av-integration\Mirra-AV.code-workspace`，本机命令见该目录的 `LOCAL-DEVELOPMENT.md`。三个仓库分别管理、提交和推送，原开发电脑与原 Lobby 工作区保留；不用每次改动都同步所有电脑。
 
-本机已完成构建、隔离接口联调、独立 V0 诊断和 V1a 实时整场输出：真实页面的共享纹理由 Mirraflow 示例进程在 NVIDIA adapter 上导入并记录 LUID。首轮 V0 的 16 个逐状态对比通过，其中 12 个实际显示媒体，4 个验证完全隐藏；后续独立 4K bitmap 参考存在小幅渲染差异，不能概括为严格逐像素相同。V1a 连续链路通过短时 4K60 测试，未接入真实教学媒体。V1b / V2 的正式能力仍未完成。六项既有 NDI 或 Alpha 素材集成测试依然未运行；新增 FFV1 Alpha fixture 不替代它们。诊断程序与原生节目输出彼此独立。
+本机已完成构建、隔离接口联调、独立 V0 诊断和 V1a 实时整场输出：真实页面的共享纹理由 Mirraflow 示例进程在 NVIDIA adapter 上导入并记录 LUID。首轮 V0 的 16 个逐状态对比通过，其中 12 个实际显示媒体，4 个验证完全隐藏；后续独立 4K bitmap 参考存在小幅渲染差异，不能概括为严格逐像素相同。早期 V1a 短时 4K60 尚无教学媒体；新增 Full Show 实验使用实际本地教学与角色卡，补上教学框和整场的完整循环。正式 V1b/V2 产品入口和物理大屏仍未验收。六项既有 NDI 或 Alpha 素材集成测试仍为显式 ignored，新实验的 FFV1 Alpha 和占位 SDK NDI 不替代它们。
 
-已有 P1 音频契约版本 `1.0`、修订 `1.0.0-draft.1` 保持不变。本文是下一阶段视觉架构决策，不增加运行时能力，也不把设计字段当作现有 API。实施前应统一修订三仓库的视觉契约，替换旧文档中双向合成的未来设计描述，再更新副本与哈希。
+已有 P1 音频契约版本 `1.0`、修订 `1.0.0-draft.1` 保持不变。本文区分未来设计、隔离实验和正式产品能力；实验执行 envelope 与新增显示命令以 Full Show 契约为准，不当作已经部署的 MES API。视觉文档副本与哈希同步到三个仓库及本机联合工作区。
 
 P1 代码已发布在三仓库的 `codex/av-contract-v1` 分支。交接基线见 [已发布三仓库交接文档](https://github.com/Mirra-Developer/mirra-lobby-hub/blob/6feee3ad93a8458626d10ff4b2cffe5f1b223cd0/docs/av-integration-handoff.md)；其中后续实施顺序以本文最新决策为准。
